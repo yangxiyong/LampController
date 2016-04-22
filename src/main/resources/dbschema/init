@@ -1,0 +1,111 @@
+/*创建utf8字符集的数据库*/
+create database if not exists lampcontroller default character set=UTF8;
+use lampcontroller;
+
+ /* 用户组表*/
+create table groups(
+	groupID int auto_increment primary key,
+    groupName nvarchar(20) unique not null,
+    createDate timestamp not null default current_timestamp,
+    createBy nvarchar(20) not null,
+    remark nvarchar(500)
+);
+
+/* 用户表*/
+create table users(
+	userID int auto_increment primary key,
+    userName nvarchar(20) unique not null,
+    passwords varchar(200) not null,
+    groupID int not null,
+    createDate timestamp not null default current_timestamp,
+    createBy nvarchar(20) not null
+);
+/* 添加外键*/
+alter table users add foreign key (groupID) references groups(groupID) on update cascade;
+
+/* 控制器表*/
+create table control(
+	controlID int auto_increment primary key,
+    controlName nvarchar(20) unique not null,
+    controlPort varchar(10) not null,
+    controlIP varchar(15) unique,
+    createDate timestamp not null default current_timestamp,
+    createBy nvarchar(20) not null
+);
+
+/* 线路表*/
+create table route(
+	routeID int auto_increment primary key,
+    routeName nvarchar(20) unique not null,
+    routeNo int not null,
+    controlID int not null,
+    createDate timestamp not null default current_timestamp,
+    createBy nvarchar(20) not null,
+    constraint ck_routeNo check(routeNo between 1 and 8)
+);
+/* 添加外键*/
+alter table route add foreign key (controlID) references control(controlID) on update cascade;
+
+/* 角色表*/
+create table role(
+	roleID int auto_increment primary key,
+    roleName nvarchar(20) unique not null,
+    remark nvarchar(500) not null,
+    createDate timestamp not null default current_timestamp,
+    createBy nvarchar(20) not null
+);
+
+/* 用户-角色表*/
+create table userRole(
+	userID int not null,
+    roleID int not null,
+    createDate timestamp not null default current_timestamp,
+    createBy nvarchar(20) not null
+);
+/* 添加外键*/
+alter table userRole add foreign key (userID) references users(userID) on update cascade on delete cascade;
+alter table userRole add foreign key (roleID) references role(roleID) on update cascade on delete cascade;
+
+
+/* 用户组-线路表*/
+create table groupRouteMapping(
+	groupID int not null,
+    routeID int not null,
+    createDate timestamp not null default current_timestamp,
+    createBy nvarchar(20) not null
+);
+/* 添加外键*/
+alter table groupRouteMapping add foreign key (groupID) references groups(groupID) on update cascade on delete cascade;
+alter table groupRouteMapping add foreign key (routeID) references route(routeID) on update cascade on delete cascade;
+
+/* 模式表*/
+create table model(
+	modelID int auto_increment primary key,
+    modelName nvarchar(20) unique not null,
+	remark nvarchar(500),
+    createDate timestamp not null default current_timestamp,
+    createBy nvarchar(20) not null
+);
+create table modelRouteMapping(
+	modelID int not null,
+    routeID int not null,
+    switchStatus int check(switches=0 or switches=1),
+    createDate timestamp not null default current_timestamp,
+    createBy nvarchar(20) not null,
+    Constraint FK_modelRouteMapping_1 foreign key(modelID) references model(modelID) on delete cascade on update cascade
+);
+/* 添加外键*/
+alter table modelRouteMapping add foreign key (routeID) references route(routeID) on update cascade on delete cascade;
+
+/* app版本信息表*/
+create table apkInfo(
+	apkID int auto_increment primary key,
+    apkName nvarchar(50) not null,
+    versionID nvarchar(20) unique not null,
+	whatNews nvarchar(700),
+    address  nvarchar(250) not null,
+    createDate timestamp not null default current_timestamp,
+    createBy nvarchar(20) not null
+);
+
+

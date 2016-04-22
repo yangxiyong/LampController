@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration
+        PUBLIC "-//ibatis.apache.org//DTD Config 3.0//EN"
+        "http://ibatis.apache.org/dtd/ibatis-3-config.dtd">
+<configuration>
+    <properties>
+        <property>
+            <name>dialect</name>
+            <value>mysql</value>
+        </property>
+        <property>
+            <name>pageSqlId</name>
+            <value>.*Page$</value>
+        </property>
+    </properties>
+    <plugins>
+        <plugin>
+            <interceptor>com.yj.intranet.lampcontroller.web.interceptor</interceptor>
+        </plugin>
+    </plugins>
+
+    <!--    &lt;!&ndash; 引用配置文件 &ndash;&gt;
+       <properties resource="site.properties"/>
+      &lt;!&ndash;可以配置多个环境。这可以帮助你SQL 映射对应多种数据库等&ndash;&gt;
+       <environments default="development">
+            <environment id="development">
+                <transactionManager type="JDBC"/>
+                <dataSource type="POOLED">
+                    &lt;!&ndash; value属性值可以引用site.properties 配置文件中配置的值&ndash;&gt;
+                    <property name="jdbc.driverClassName" value="${jdbc.driverClassName}"/>
+                    <property name="jdbc.url" value="${jdbc.url}"/>
+                    <property name="jdbc.username" value="${jdbc.username}"/>
+                    <property name="jdbc.password" value="${jdbc.password}"/>
+                </dataSource>
+            </environment>
+        </environments>-->
+
+    <!--  是使用实体配置的实现，如果使用注解则不需要添加
+       <mappers>
+            <mapper resource="org/apache/ibatis/example/BlogMapper.xml"/>
+        </mappers>-->
+</configuration>

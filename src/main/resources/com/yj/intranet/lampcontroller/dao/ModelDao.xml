@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+       Copyright 2010-2013 the original author or authors.
+
+       Licensed under the Apache License, Version 2.0 (the "License");
+       you may not use this file except in compliance with the License.
+       You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+       Unless required by applicable law or agreed to in writing, software
+       distributed under the License is distributed on an "AS IS" BASIS,
+       WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+       See the License for the specific language governing permissions and
+       limitations under the License.
+-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yj.intranet.lampcontroller.dao.ModelDao">
+    <!--  <cache />
+    many to many
+     -->
+    <resultMap id="modelResultMap" type="Model">
+        <id property="modelID" column="modelId"></id>
+        <result property="modelName" column="modelName"/>
+        <result property="createDate" column="createDate"/>
+        <result property="createBy" column="createBy"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+    <resultMap id="modelRouteResultMap" type="Model" extends="modelResultMap">
+        <collection property="routes" column="routeID" ofType="ModelRoute">
+            <id property="routeID" column="routeID"/>
+            <result property="routeName" column="routeName"/>
+            <result property="routeNo" column="routeNo"/>
+            <result property="switchStatus" column="switchStatus"/>
+            <association property="control" column="controlID"
+                         select="com.yj.intranet.lampcontroller.dao.ControlDao.getControlByID"/>
+        </collection>
+    </resultMap>
+    <select id="findOne" resultMap="modelRouteResultMap">
+        SELECT * FROM MODEL m LEFT JOIN MODELROUTEMAPPING mr ON m.modelID=mr.modelID
+        LEFT JOIN ROUTE r ON r.routeID=mr.routeID
+        <where>
+            m.modelID = #{param1}
+            <!-- <if test="modelName!=null and modelName!=''">m.modelName = #{modelName}</if> -->
+        </where>
+    </select>
+    <select id="getModelByName" resultType="Model">
+        SELECT * FROM MODEL WHERE modelName = #{param1}
+    </select>
+
+    <insert id="addModel" parameterType="Model">
+        INSERT INTO MODEL (modelName,createDate,createBy,remark) values(#{modelName},#{createDate,jdbcType=TIMESTAMP},#{createBy},#{remark})
+    </insert>
+    <delete id="deleteModel" parameterType="int">
+        DELETE FROM MODEL WHERE modelID = #{param1}
+    </delete>
+    <update id="updateModel" parameterType="Model">
+        UPDATE MODEL set
+        modelName=#{modelName},createDate=#{createDate,jdbcType=TIMESTAMP},createBy=#{createBy},remark=#{remark} where
+        modelID=#{modelID}
+    </update>
+    <select id="listModel" resultMap="modelRouteResultMap">
+        SELECT * FROM MODEL m LEFT JOIN MODELROUTEMAPPING mr ON m.modelID=mr.modelID
+        LEFT  JOIN ROUTE r ON r.routeID=mr.routeID
+    </select>
+
+
+    <select id="listModelByPage" resultType="Model">
+        SELECT * FROM MODEL  limit #{param1}, #{param2}
+    </select>
+    <!--模式线路模块 begin-->
+    <select id="findOther" resultMap="com.yj.intranet.lampcontroller.dao.RouteDao.routeControlResultMap">
+        select route.*
+        from route inner join ModelRouteMapping on route.routeID = ModelRouteMapping.routeID
+        where ModelRouteMapping.modelID != #{param1};
+    </select>
+    <insert id="saveModelRoute" parameterType="java.util.Map">
+        INSERT INTO ModelRouteMapping(modelID,routeID,switchStatus,createBy) values
+        <foreach collection="list" item="modelRoute" separator=",">
+            (#{mId},#{modelRoute.routeID},#{modelRoute.switchStatus},#{uName})
+        </foreach>
+    </insert>
+    <delete id="deleteModelFromModelRouteMapping" parameterType="int">
+        DELETE FROM ModelRouteMapping WHERE modelID = #{param1}
+    </delete>
+    <delete id="bulkDelete" parameterType="java.util.Map">
+        DELETE FROM ModelRouteMapping
+        <where>
+            <foreach collection="list" item="route" separator="or">
+                (modelID = #{mId} AND routeId=#{route.routeID})
+            </foreach>
+        </where>
+    </delete>
+    <!-- 模式线路模块 end-->
+    <select id="listSimpleModel" resultType="Model">
+        SELECT * FROM MODEL
+    </select>
+</mapper>

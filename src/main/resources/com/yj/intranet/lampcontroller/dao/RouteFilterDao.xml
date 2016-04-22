@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+       Copyright 2010-2013 the original author or authors.
+
+       Licensed under the Apache License, Version 2.0 (the "License");
+       you may not use this file except in compliance with the License.
+       You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+       Unless required by applicable law or agreed to in writing, software
+       distributed under the License is distributed on an "AS IS" BASIS,
+       WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+       See the License for the specific language governing permissions and
+       limitations under the License.
+-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yj.intranet.lampcontroller.dao.RouteFilterDao">
+    <!-- <cache />
+     -->
+    <resultMap id="routeControlFilterResultMap" type="RouteFilter">
+        <id property="id" column="id"/>
+        <result property="filterName" column="routeName"/>
+        <result property="place" column="place"/>
+        <result property="createDate" column="createDate"></result>
+        <result property="updateDate" column="updateDate"></result>
+        <result property="createBy" column="createBy"></result>
+        <result property="remark" column="remark"/>
+        <!--   <association property="user" javaType="Users" column="userId"
+                        select="com.yj.intranet.lampcontroller.dao.UsersDao.findByID"/>-->
+        <collection property="routes" ofType="Route" javaType="ArrayList" column="id" select="listRoutesByFilterId">
+        </collection>
+    </resultMap>
+
+    <resultMap id="simpleFilterModelResultMap" type="RouteFilter">
+        <id property="id" column="id"/>
+        <result property="filterName" column="routeName"/>
+        <result property="place" column="place"/>
+        <result property="createDate" column="createDate"></result>
+        <result property="updateDate" column="updateDate"></result>
+        <result property="createBy" column="createBy"></result>
+        <result property="remark" column="remark"/>
+        <!--        <association property="user" javaType="Users" column="userId"
+                             select="com.yj.intranet.lampcontroller.dao.UsersDao.findByID"/>-->
+        <collection property="models" ofType="Model" javaType="ArrayList" column="id" select="listModelByFilterId">
+        </collection>
+    </resultMap>
+
+    <resultMap id="filterModelResultMap" type="RouteFilter">
+        <id property="id" column="id"/>
+        <result property="filterName" column="routeName"/>
+        <result property="place" column="place"/>
+        <result property="createDate" column="createDate"></result>
+        <result property="updateDate" column="updateDate"></result>
+        <result property="createBy" column="createBy"></result>
+        <result property="remark" column="remark"/>
+        <!--        <association property="user" javaType="Users" column="userId"
+                             select="com.yj.intranet.lampcontroller.dao.UsersDao.findByID"/>-->
+        <collection property="models" ofType="Model" javaType="ArrayList" column="id" select="listModelRouteByFilterId">
+        </collection>
+    </resultMap>
+    <!---for api begin -->
+    <select id="listRouteFilter" resultMap="simpleFilterModelResultMap">
+        SELECT * FROM routefilter  WHERE userId=#{param1}
+    </select>
+
+    <select id="listRouteFilterIncludeModelRoute" resultMap="filterModelResultMap">
+       SELECT * FROM routefilter
+        WHERE userId=#{param1}
+    </select>
+    <select id="listModelRouteByFilterId" resultMap="com.yj.intranet.lampcontroller.dao.ModelDao.modelRouteResultMap">
+        SELECT * FROM filermodelmapping fm
+        LEFT JOIN  MODEL m ON m.modelID=fm.modelId
+        LEFT JOIN MODELROUTEMAPPING mr ON m.modelID=mr.modelID
+        LEFT  JOIN ROUTE r ON r.routeID=mr.routeID
+        WHERE fm.filterId=#{param1}
+    </select>
+    <select id="listModelByFilterId" resultMap="com.yj.intranet.lampcontroller.dao.ModelDao.modelResultMap">
+        SELECT * FROM filermodelmapping fm
+        LEFT JOIN  MODEL m ON m.modelID=fm.modelId
+        WHERE fm.filterId=#{param1}
+    </select>
+    <!-- 登录首页调整 begin -->
+    <select id="listFilterRoutes" resultMap="routeControlFilterResultMap">
+        SELECT * FROM routefilter
+        WHERE userId=#{param1}
+    </select>
+    <select id="listRoutesByFilterId" resultMap="com.yj.intranet.lampcontroller.dao.RouteDao.routeControlResultMap">
+        SELECT * FROM filercontrolmapping fm
+        LEFT JOIN  control c ON c.controlID=fm.controlId
+        LEFT  JOIN ROUTE r ON r.controlID=c.controlID
+        WHERE fm.filterId=#{param1}
+    </select>
+    <sql id="select_first_FilterID">
+         SELECT id FROM routefilter
+        WHERE userId=#{param1}
+        ORDER  BY id
+        limit 0,1
+    </sql>
+    <select id="getFilterRoutesByFilterId" resultMap="routeControlFilterResultMap">
+        SELECT * FROM routefilter
+        <where>
+            <if test="param2!=0">
+                id=#{param2}
+            </if>
+            <if test="param2==0">
+                <!--id=2 -->
+                id=(<include refid="select_first_FilterID"/>)
+            </if>
+        </where>
+    </select>
+    <!-- 登录首页调整 end -->
+    <!---for api end -->
+
+    <!-- web begin-->
+    <resultMap id="filterUserResultMap" type="RouteFilter">
+        <id property="id" column="id"/>
+        <result property="filterName" column="routeName"/>
+        <result property="place" column="place"/>
+        <result property="createDate" column="createDate"></result>
+        <result property="updateDate" column="updateDate"></result>
+        <result property="createBy" column="createBy"></result>
+        <result property="remark" column="remark"/>
+        <association property="user" javaType="Users" column="userId"
+                     select="com.yj.intranet.lampcontroller.dao.UsersDao.findByID"/>
+    </resultMap>
+    <resultMap id="filterControlResultMap" type="RouteFilter">
+        <id property="id" column="id"/>
+        <result property="filterName" column="routeName"/>
+        <result property="place" column="place"/>
+        <result property="createDate" column="createDate"></result>
+        <result property="updateDate" column="updateDate"></result>
+        <result property="createBy" column="createBy"></result>
+        <result property="remark" column="remark"/>
+        <!--        <association property="user" javaType="Users" column="userId"
+                             select="com.yj.intranet.lampcontroller.dao.UsersDao.findByID"/>-->
+        <collection property="controls" ofType="Control" javaType="ArrayList" column="id" select="listControlByFilterId">
+        </collection>
+    </resultMap>
+
+    <select id="findTotalCount" resultType="int">
+        SELECT COUNT(*) FROM routefilter
+        <!--WHERE userId=#{param1} -->
+    </select>
+    <select id="listFilterByPage" resultType="RouteFilter">
+        SELECT * FROM routefilter
+        <!-- WHERE userId=#{param1} -->
+        limit #{param1}, #{param2}
+    </select>
+
+    <select id="findOne" resultMap="filterUserResultMap">
+        SELECT * FROM routefilter WHERE id = #{param1}
+  </select>
+    <select id="findOneWithModel" resultMap="filterModelResultMap">
+        SELECT * FROM routefilter WHERE id = #{param1}
+    </select>
+
+    <insert id="addFilter" parameterType="RouteFilter">
+        INSERT INTO routefilter(filterName,userId,place,createDate,updateDate,createBy,remark) values(#{filterName},#{user.userID},#{place},#{createDate,jdbcType=TIMESTAMP},#{updateDate,jdbcType=TIMESTAMP},#{createBy},#{remark})
+  </insert>
+    <delete id="deleteFilter" parameterType="int">
+        DELETE FROM routefilter WHERE id = #{param1}
+    </delete>
+    <update id="updateFilter" parameterType="RouteFilter">
+        UPDATE routefilter set filterName=#{filterName},place=#{place},updateDate=#{updateDate,jdbcType=TIMESTAMP},createBy=#{createBy},remark=#{remark} where id=#{id}
+    </update>
+    <select id="findByName" resultType="RouteFilter">
+        SELECT * FROM routefilter
+        <where>
+            filterName LIKE CONCAT(CONCAT('%', #{param1}),'%')
+            <if test="param3!=0">
+                limit 0,3
+            </if>
+        </where>
+    </select>
+    <!-- 保存分类模式对应关系 begin-->
+    <insert id="saveFilterModel" parameterType="java.util.Map">
+        INSERT INTO filermodelmapping(filterId,modelId,createBy) values
+        <foreach collection="array" item="routeID" separator=",">
+            (#{gId},#{routeID},#{uName})
+        </foreach>
+    </insert>
+    <delete id="deleteModelFromFilterModelMapping" parameterType="int"> <!-- 删除表中特定groupID的所有记录，类似一特别的批量删除-->
+        DELETE FROM filermodelmapping WHERE filterId = #{param1}
+    </delete>
+    <!-- 保存分类模式对应关系 end-->
+
+    <!-- 保存分类控制器对应关系 begin-->
+    <select id="findOneWithControl" resultMap="filterControlResultMap">
+      SELECT * FROM routefilter
+       WHERE id = #{param1}
+       /* SELECT * FROM routefilter r
+        LEFT JOIN  filercontrolmapping m ON m.filterId=r.id
+        WHERE id = #{param1}*/
+    </select>
+    <select id="listControlByFilterId" resultMap="com.yj.intranet.lampcontroller.dao.ControlDao.controlResultMap">
+       SELECT c.* FROM filercontrolmapping fm
+        LEFT JOIN  control c ON c.controlID=fm.controlId
+        WHERE fm.filterId=#{param1}
+    </select>
+
+    <insert id="saveFilterControl" parameterType="java.util.Map">
+        INSERT INTO filercontrolmapping(filterId,controlId,createBy) values
+        <foreach collection="array" item="routeID" separator=",">
+            (#{gId},#{routeID},#{uName})
+        </foreach>
+    </insert>
+    <delete id="deleteControlFromFilterControlMapping" parameterType="int"> <!-- 删除表中特定groupID的所有记录，类似一特别的批量删除-->
+        DELETE FROM filercontrolmapping WHERE filterId = #{param1}
+    </delete>
+    <!-- 保存分类控制器对应关系 end-->
+    <!-- web end-->
+</mapper>

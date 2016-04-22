@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+       Copyright 2010-2013 the original author or authors.
+
+       Licensed under the Apache License, Version 2.0 (the "License");
+       you may not use this file except in compliance with the License.
+       You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+       Unless required by applicable law or agreed to in writing, software
+       distributed under the License is distributed on an "AS IS" BASIS,
+       WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+       See the License for the specific language governing permissions and
+       limitations under the License.
+-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yj.intranet.lampcontroller.dao.UsersDao">
+    <!--  <cache /> -->
+    <resultMap id="userResultMap" type="Users">
+        <id column="userID" property="userID"/>
+        <result property="userName" column="userName"></result>
+        <result property="passwords" column="passwords"></result>
+        <result property="createDate" column="createDate"></result>
+        <result property="createBy" column="createBy"></result>
+        <association property="group" column="groupID" select="com.yj.intranet.lampcontroller.dao.GroupsDao.findOne"/>
+        <collection property="roles" column="roleID" ofType="Role"
+                    select="com.yj.intranet.lampcontroller.dao.RoleDao.findRolesByUserId"/>
+    </resultMap>
+    <select id="findOne" resultMap="userResultMap">
+        SELECT * FROM USERS WHERE userName = #{param1} and passwords = #{param2}
+    </select>
+    <select id="findByName" resultType="Users">
+        SELECT * FROM USERS WHERE userName = #{param1}
+    </select>
+    <select id="findByID" resultMap="userResultMap">
+        SELECT * FROM USERS WHERE userID = #{param1}
+    </select>
+
+    <select id="queryByName" resultMap="userResultMap">
+        SELECT * FROM USERS
+        <where>
+            userName LIKE CONCAT(CONCAT('%', #{param1}),'%')
+            <if test="param3!=0">
+                limit 0,3
+            </if>
+        </where>
+    </select>
+
+    <insert id="addUser" parameterType="Users">
+        INSERT INTO USERS(userName,passwords,groupID,createDate,createBy)
+        values(#{userName},#{passwords},#{group.groupID},#{createDate,jdbcType=TIMESTAMP},#{createBy})
+    </insert>
+    <delete id="deleteUser" parameterType="int">
+        DELETE FROM USERS WHERE userID = #{param1}
+    </delete>
+    <update id="updateUser" parameterType="Users">
+        UPDATE USERS set
+        userName=#{userName},groupID=#{group.groupID},createDate=#{createDate,jdbcType=TIMESTAMP},createBy=#{createBy}
+        where userID=#{userID}
+    </update>
+    <update id="updatePwd">
+        UPDATE USERS set passwords=#{param2} where userName=#{param1}
+    </update>
+    <select id="listUser" resultType="User">
+        SELECT * FROM USERS
+    </select>
+
+    <select id="listUserByPage" resultMap="userResultMap">
+        SELECT * FROM USERS  limit #{param1}, #{param2}
+    </select>
+</mapper>

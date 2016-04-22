@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+       Copyright 2010-2013 the original author or authors.
+
+       Licensed under the Apache License, Version 2.0 (the "License");
+       you may not use this file except in compliance with the License.
+       You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+       Unless required by applicable law or agreed to in writing, software
+       distributed under the License is distributed on an "AS IS" BASIS,
+       WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+       See the License for the specific language governing permissions and
+       limitations under the License.
+-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yj.intranet.lampcontroller.dao.RouteDao">
+    <!-- <cache />
+     -->
+    <resultMap id="routeControlResultMap" type="Route">
+        <id property="routeID" column="routeID"/>
+        <result property="routeName" column="routeName"/>
+        <result property="routeNo" column="routeNo"/>
+        <result property="createDate" column="createDate"></result>
+        <result property="createBy" column="createBy"></result>
+        <association property="control" javaType="Control" column="controlID"
+                     select="com.yj.intranet.lampcontroller.dao.ControlDao.getControlByID"/>
+    </resultMap>
+    <select id="getRouteControlByRouteId" resultMap="routeControlResultMap">
+         SELECT * FROM ROUTE WHERE routeID = #{routeID}
+    </select>
+    <select id="findRoutesByGroupId" resultMap="routeControlResultMap"><!-- 当表grouproutemapping为空数据时，查询不到Route结果 -->
+        select route.*
+        from route inner join grouproutemapping on route.routeID = grouproutemapping.routeID
+        where grouproutemapping.groupID = #{param1};
+    </select>
+
+    <select id="findOne" resultMap="routeControlResultMap"> <!-- resultType="Route" 使用这种类型的返回值 是获取不到Route内含的Control对象-->
+        SELECT * FROM ROUTE WHERE routeID = #{param1}
+    </select>
+    <select id="getRouteByName" resultType="Route">
+        SELECT * FROM ROUTE WHERE routeName = #{param1}
+    </select>
+    <select id="getAvailableController" resultMap="routeControlResultMap">
+        select r.* from
+(select controlID,count(routeNo) as rno FROM route group by controlID having rno between 0 and 7) t,route r
+where t.controlID=r.controlID ;
+    </select>
+    <select id="getDisableController" resultMap="routeControlResultMap">
+        select r.* from
+        (select controlID,count(routeNo) as rno FROM route group by controlID having rno=8) t,route r
+        where t.controlID=r.controlID ;
+    </select>
+    <insert id="addRoute" parameterType="Route">
+        INSERT INTO ROUTE(routeName,routeNo,controlID,createDate,createBy) values(#{routeName},#{routeNo},#{control.controlID},#{createDate,jdbcType=TIMESTAMP},#{createBy})
+    </insert>
+    <delete id="deleteRoute">
+        DELETE FROM ROUTE WHERE routeID = #{param1}
+    </delete>
+    <update id="updateRoute" parameterType="Route">
+        UPDATE ROUTE set routeName=#{routeName},routeNo=#{routeNo},controlID=#{control.controlID},createDate=#{createDate,jdbcType=TIMESTAMP},createBy=#{createBy} where routeID=#{routeID}
+    </update>
+    <select id="listRoute" resultMap="routeControlResultMap">
+        SELECT * FROM ROUTE
+    </select>
+
+
+    <select id="listRouteByPage" resultMap="routeControlResultMap">
+        SELECT * FROM ROUTE  limit #{param1}, #{param2}
+    </select>
+    <select id="findByName" resultMap="routeControlResultMap">
+        SELECT * FROM ROUTE
+        <where>
+            routeName LIKE CONCAT(CONCAT('%', #{param1}),'%')
+            <if test="param3!=0">
+                limit 0,15
+            </if>
+        </where>
+    </select>
+
+    <update id="updateName">
+        UPDATE ROUTE set routeName=#{param2} where routeID=#{param1}
+    </update>
+</mapper>

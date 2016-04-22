@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+       Copyright 2010-2013 the original author or authors.
+
+       Licensed under the Apache License, Version 2.0 (the "License");
+       you may not use this file except in compliance with the License.
+       You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+       Unless required by applicable law or agreed to in writing, software
+       distributed under the License is distributed on an "AS IS" BASIS,
+       WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+       See the License for the specific language governing permissions and
+       limitations under the License.
+-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yj.intranet.lampcontroller.dao.GroupsDao">
+    <!--  <cache />
+        one to many
+    -->
+    <resultMap id="groupResult" type="Groups">
+        <id column="groupID" property="groupID"/>
+        <result property="groupName" column="groupName"></result>
+        <result property="createDate" column="createDate"></result>
+        <result property="createBy" column="createBy"></result>
+        <result property="remark" column="remark"></result>
+        <collection property="routes" column="groupID"
+                    select="com.yj.intranet.lampcontroller.dao.RouteDao.findRoutesByGroupId"
+                    ofType="Route"></collection>
+    </resultMap>
+    <select id="findOne" resultMap="groupResult">
+        SELECT * FROM GROUPS WHERE groupID = #{param1}
+    </select>
+
+    <select id="findByUserName" resultType="Groups">
+        SELECT g.* FROM GROUPS g,USERS u WHERE g.groupID=u.groupID and userName = #{param1}
+    </select>
+    <select id="findByName" resultType="Groups">
+        SELECT * FROM GROUPS
+        <where>
+            groupName LIKE CONCAT(CONCAT('%', #{param1}),'%')
+            <if test="param3!=0">
+                limit 0,3
+            </if>
+        </where>
+    </select>
+    <select id="getGroupByName" resultType="Groups">
+        SELECT * FROM GROUPS WHERE groupName = #{param1}
+    </select>
+
+    <insert id="addGroup" parameterType="Groups">
+        INSERT INTO GROUPS(groupName,createDate,createBy,remark) values(#{groupName},#{createDate,jdbcType=TIMESTAMP},#{createBy},#{remark})
+    </insert>
+    <delete id="deleteGroup" parameterType="int">
+        DELETE FROM GROUPS WHERE groupID = #{param1}
+    </delete>
+    <update id="updateGroup" parameterType="Groups">
+        UPDATE GROUPS set groupName=#{groupName},createDate=#{createDate,jdbcType=TIMESTAMP},createBy=#{createBy},remark=#{remark} where groupID=#{groupID}
+    </update>
+    <select id="listGroup" resultType="Groups">  <!-- resultType is Groups ,but not List-->
+        SELECT * FROM GROUPS
+    </select>
+
+    <select id="findTotalCount" resultType="int">
+        SELECT COUNT(*) FROM GROUPS
+    </select>
+
+    <select id="listGroupByPage" resultMap="groupResult">
+        SELECT * FROM GROUPS  limit #{param1}, #{param2}
+    </select>
+
+    <!-- 用户组线路模块 begin-->
+    <select id="findOther"
+            resultMap="com.yj.intranet.lampcontroller.dao.RouteDao.routeControlResultMap"><!-- 当表grouproutemapping为空数据时，查询不到Route结果 -->
+       select route.*
+        from route inner join grouproutemapping on route.routeID = grouproutemapping.routeID
+        where grouproutemapping.groupID != #{param1};
+    </select>
+    <insert id="saveGroupRoute" parameterType="java.util.Map">
+        INSERT INTO groupRouteMapping(groupID,routeID,createBy) values
+        <foreach collection="array" item="routeID" separator=",">
+            (#{gId},#{routeID},#{uName})
+        </foreach>
+    </insert>
+    <delete id="deleteGroupFromGroupRouteMapping" parameterType="int"> <!-- 删除表中特定groupID的所有记录，类似一特别的批量删除-->
+        DELETE FROM groupRouteMapping WHERE groupID = #{param1}
+    </delete>
+    <delete id="bulkDelete" parameterType="java.util.Map"> <!--  批量删除 联合主键的表中记录(2个字段确定一条记录) -->
+        <!-- DELETE FROM groupRouteMapping  where (groupID=2 and routeID=7) or (groupID=2 and routeID=8)or (groupID=2 and routeID=12); -->
+        DELETE FROM groupRouteMapping
+        <where>
+            <foreach collection="list" item="route" separator="or">
+                (groupID = #{gId} AND routeId=#{route.routeID})
+            </foreach>
+        </where>
+    </delete>
+    <!-- 用户组线路模块 end-->
+</mapper>
